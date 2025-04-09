@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
+    console.log(`MongoDB Connecting...`);
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       connectTimeoutMS: 30000, // Increase to 30 seconds
       socketTimeoutMS: 30000, // Increase to 30 seconds
@@ -14,3 +15,4 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
+

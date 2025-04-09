@@ -6,6 +6,8 @@ const connectDB = require("../config/db");
 // Signup
 exports.signupDoctor = async (req, res) => {
   try {
+    console.log("log signup");
+
     connectDB();
 
     const {
@@ -34,9 +36,11 @@ exports.signupDoctor = async (req, res) => {
 
     await newDoctor.save();
 
-    const doctor = new Doctor.find({
-      licenseNumber: lisenceNumber,
+    // Corrected this part
+    const doctor = await Doctor.findOne({
+      licenseNumber: licenseNumber,
     }).select("_id");
+
     console.log("Doctor Registered", doctor);
 
     const token = jwt.sign({ id: doctor._id }, process.env.JWT_SECRET, {

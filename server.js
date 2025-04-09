@@ -24,14 +24,14 @@ const io = new Server(server, {
     methods: ["GET", "POST", "PUT"],
     allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
     credentials: true, // Allow credentials if needed
-  },  
+  },
 });
 
 io.on("connection", (socket) => {
   console.log("New client connected");
 
   socket.on("call-doctor", ({ signal, patient }) => {
-    console.log("call", patient);
+    // console.log("call", patient);
 
     socket.broadcast.emit("incoming-call", { signal, patient });
   });
@@ -42,6 +42,13 @@ io.on("connection", (socket) => {
 
   socket.on("end-call", ({ patientId }) => {
     io.to(patientId).emit("call-ended");
+  });
+
+  socket.on("prescribe-medicines", (data) => {
+    console.log("Received prescribed medicines:", data);
+
+    // Forward the data to the vending machine
+    socket.broadcast.emit("vending-machine-update", data); // Broadcast to all clients or target specific vending machine
   });
 
   socket.on("disconnect", () => {
