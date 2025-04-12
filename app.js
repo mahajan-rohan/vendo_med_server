@@ -3,6 +3,7 @@ const cors = require("cors");
 const patientRoutes = require("./routes/patientRoutes");
 const vendingMachineRoutes = require("./routes/vendingMachineRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
+const consultationRoutes = require("./routes/consultationRoutes");
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.use(express.json());
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/machines", vendingMachineRoutes);
+app.use("/api/consultations", consultationRoutes);
 
 module.exports = app;

@@ -95,7 +95,7 @@ exports.loginDoctor = async (req, res) => {
     console.log(licenseNumber, password);
 
     const token = jwt.sign({ id: doctor._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "1d",
     });
 
     console.log("token", token);
@@ -111,7 +111,7 @@ exports.loginDoctor = async (req, res) => {
 exports.getDoctorDetails = async (req, res) => {
   connectDB();
   try {
-    console.log("got in the controller", req.user.id);
+    // console.log("got in the controller", req.user.id);
 
     // Convert string ID to ObjectID
     // const doctorId = mongoose.Types.ObjectId(req.user.id);

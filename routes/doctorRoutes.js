@@ -14,7 +14,8 @@ router.post("/signup", validateDoctorSignup, signupDoctor);
 router.post("/login", loginDoctor);
 
 // Protected routes
-router.get("/me", authenticate, getDoctorDetails); // Get authenticated doctor's details
+// router.get("/me", authenticate, getDoctorDetails); // Get authenticated doctor's details
 router.put("/update", authenticate, updateDoctorDetails); // Update authenticated doctor's details
+router.get("/details", authenticate, getDoctorDetails);
 
 module.exports = router;
