@@ -13,6 +13,8 @@ if (!process.env.STRIPE_SECRET_KEY) {
   );
 }
 
+let onlineDoctors = new Set();
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PORT = process.env.PORT || 4000;
@@ -29,6 +31,11 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log("New client connected");
+
+  socket.on("doctor-online", () => {
+    onlineDoctors.add(socket.id);
+    io.emit("update-doctor-count", onlineDoctors.size);
+  });
 
   socket.on("call-doctor", ({ signal, patient }) => {
     // console.log("call", patient);
@@ -51,8 +58,19 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("vending-machine-update", data); // Broadcast to all clients or target specific vending machine
   });
 
+  socket.on("send-image", (data) => {
+    console.log("Received Payment QR Image:", data);
+
+    // Broadcast the image to the specific patient
+    io.to(data.patientId).emit("receive-image", data);
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected");
+    if (onlineDoctors.has(socket.id)) {
+      onlineDoctors.delete(socket.id);
+      io.emit("update-doctor-count", onlineDoctors.size);
+    }
   });
 });
 
