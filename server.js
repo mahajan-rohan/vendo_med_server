@@ -43,8 +43,8 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("incoming-call", { signal, patient });
   });
 
-  socket.on("accept-call", ({ signal }) => {
-    socket.broadcast.emit("doctor-accepted", { signal });
+  socket.on("accept-call", ({ signal, doctorId }) => {
+    socket.broadcast.emit("doctor-accepted", { signal, doctorId });
   });
 
   socket.on("end-call", ({ patientId }) => {
@@ -63,6 +63,11 @@ io.on("connection", (socket) => {
 
     // Broadcast the image to the specific patient
     io.to(data.patientId).emit("receive-image", data);
+  });
+
+  socket.on("health-data", (data) => {
+    console.log("Health data from patient to doctor:", data);
+    io.emit("health-data", data);
   });
 
   socket.on("disconnect", () => {
