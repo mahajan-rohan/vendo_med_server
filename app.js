@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { exec } = require("child_process"); // ✨ Added
+const { spawn } = require("child_process"); // ✨ Added
 const patientRoutes = require("./routes/patientRoutes");
 const vendingMachineRoutes = require("./routes/vendingMachineRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");

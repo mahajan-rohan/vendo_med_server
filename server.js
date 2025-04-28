@@ -1,6 +1,6 @@
 const http = require("http");
 const { Server } = require("socket.io");
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 const connectDB = require("./config/db");
 const app = require("./app");
 const { default: Stripe } = require("stripe");
@@ -88,6 +88,7 @@ let sensorData = {};
 app.post('/api/sensors', (req, res) => {
   sensorData = req.body;
   console.log('Received sensor data:', sensorData);
+  io.emit("health-data", sensorData);
   res.json({ status: 'ok' });
 });
 
