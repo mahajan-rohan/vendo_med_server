@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const { exec } = require("child_process"); // ✨ Added
 const patientRoutes = require("./routes/patientRoutes");
 const vendingMachineRoutes = require("./routes/vendingMachineRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
@@ -11,8 +12,8 @@ app.use(
   cors({
     origin: "http://localhost:3000",
     methods: ["GET", "POST", "PUT"],
-    allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
-    credentials: true, // Allow credentials if needed
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 app.use(express.json());
