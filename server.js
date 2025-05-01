@@ -1,6 +1,6 @@
 const http = require("http");
 const { Server } = require("socket.io");
-const { spawn } = require('child_process');
+const { spawn, execFile } = require("child_process");
 const connectDB = require("./config/db");
 const app = require("./app");
 const { default: Stripe } = require("stripe");
@@ -79,61 +79,81 @@ io.on("connection", (socket) => {
     }
   });
 
- 
-let sensorProcess = null; // 🆕 store the running process
+  let sensorProcess = null; // 🆕 store the running process
 
-let sensorData = {};
+  let sensorData = {};
 
-// API to receive sensor data from Raspberry Pi
-app.post('/api/sensors', (req, res) => {
-  sensorData = req.body;
-  console.log('Received sensor data:', sensorData);
-  io.emit("health-data", sensorData);
-  res.json({ status: 'ok' });
-});
+  // API to receive sensor data from Raspberry Pi
+  app.post("/api/sensors", (req, res) => {
+    sensorData = req.body;
+    console.log("Received sensor data:", sensorData);
+    io.emit("health-data", sensorData);
+    res.json({ status: "ok" });
+  });
 
-// API to send latest sensor data to frontend
-app.get('/api/sensors', (req, res) => {
-  res.json(sensorData);
-});
+  // API to send latest sensor data to frontend
+  app.get("/api/sensors", (req, res) => {
+    res.json(sensorData);
+  });
 
-// 🆕 API to START the Python script
-app.get('/api/start-script', (req, res) => {
-  if (!sensorProcess) {
-    sensorProcess = spawn('python', ['./sensors.py']); // Or 'python' if on Windows
+  // 🆕 API to START the Python script
+  app.get("/api/start-script", (req, res) => {
+    if (!sensorProcess) {
+      sensorProcess = spawn("python", ["./sensors.py"]); // Or 'python' if on Windows
 
-    sensorProcess.stdout.on('data', (data) => {
-      console.log(`Sensor Script stdout: ${data}`);
-    });
-   
-    sensorProcess.stderr.on('data', (data) => {
-      console.error(`Sensor Script stderr: ${data}`);
-    }); 
+      sensorProcess.stdout.on("data", (data) => {
+        console.log(`Sensor Script stdout: ${data}`);
+      });
 
-    sensorProcess.on('close', (code) => {
-      console.log(`Sensor script exited with code ${code}`);
+      sensorProcess.stderr.on("data", (data) => {
+        console.error(`Sensor Script stderr: ${data}`);
+      });
+
+      sensorProcess.on("close", (code) => {
+        console.log(`Sensor script exited with code ${code}`);
+        sensorProcess = null;
+      });
+
+      res.json({ success: true, message: "Sensor script started" });
+    } else {
+      res.json({ success: false, message: "Sensor script already running" });
+    }
+  });
+
+  // 🆕 API to STOP the Python script
+  app.get("/api/stop-script", (req, res) => {
+    if (sensorProcess) {
+      sensorProcess.kill("SIGTERM"); // Kill the process
       sensorProcess = null;
-    });
+      res.json({ success: true, message: "Sensor script stopped" });
+    } else {
+      res.json({ success: false, message: "No sensor script running" });
+    }
+  });
 
-    res.json({ success: true, message: "Sensor script started" });
-  } else {
-    res.json({ success: false, message: "Sensor script already running" });
-  }
+  app.post("/run-script", (req, res) => {
+    const { motors } = req.body;
+
+    console.log({ motors });
+
+    if (!motors || !Array.isArray(motors)) {
+      return res.status(400).send("Invalid motors array");
+    }
+
+    execFile(
+      "python",
+      ["./motor_rotate.py", ...motors],
+      (err, stdout, stderr) => {
+        if (err) {
+          console.error("Script error:", stderr);
+          return res.status(500).send(stderr);
+        }
+        console.log("Script output:", stdout);
+        res.send(stdout);
+      }
+    );
+  });
 });
-
-// 🆕 API to STOP the Python script
-app.get('/api/stop-script', (req, res) => {
-  if (sensorProcess) {
-    sensorProcess.kill('SIGTERM'); // Kill the process
-    sensorProcess = null;
-    res.json({ success: true, message: "Sensor script stopped" });
-  } else {
-    res.json({ success: false, message: "No sensor script running" });
-  }
-});
-
-});
-
 
 app.post("/api/generatePayment", async (req, res) => {
   const { amount, patientId } = req.body;
