@@ -4,6 +4,7 @@ const { spawn, execFile } = require("child_process");
 const connectDB = require("./config/db");
 const app = require("./app");
 const { default: Stripe } = require("stripe");
+const { default: axios } = require("axios");
 
 require("dotenv").config();
 // connectDB();
@@ -23,7 +24,7 @@ const PORT = process.env.PORT || 4000;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "*",
     methods: ["GET", "POST", "PUT"],
     allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
     credentials: true, // Allow credentials if needed
@@ -97,61 +98,84 @@ io.on("connection", (socket) => {
   });
 
   // 🆕 API to START the Python script
-  app.get("/api/start-script", (req, res) => {
-    if (!sensorProcess) {
-      sensorProcess = spawn("python", ["./sensors.py"]); // Or 'python' if on Windows
+  app.get("/api/start-script", async (req, res) => {
 
-      sensorProcess.stdout.on("data", (data) => {
-        console.log(`Sensor Script stdout: ${data}`);
-      });
-
-      sensorProcess.stderr.on("data", (data) => {
-        console.error(`Sensor Script stderr: ${data}`);
-      });
-
-      sensorProcess.on("close", (code) => {
-        console.log(`Sensor script exited with code ${code}`);
-        sensorProcess = null;
-      });
-
-      res.json({ success: true, message: "Sensor script started" });
-    } else {
-      res.json({ success: false, message: "Sensor script already running" });
+    try {
+      const res = await axios.get("http://192.16.20.46:5000/start-sensor");
+      console.log("res from pi:", res.data);
+    } catch (error) {
+      console.log("error", error.message);
     }
+
+    // if (!sensorProcess) {
+    //   sensorProcess = spawn("python", ["./sensors.py"]); // Or 'python' if on Windows
+
+    //   sensorProcess.stdout.on("data", (data) => {
+    //     console.log(`Sensor Script stdout: ${data}`);
+    //   });
+
+    //   sensorProcess.stderr.on("data", (data) => {
+    //     console.error(`Sensor Script stderr: ${data}`);
+    //   });
+
+    //   sensorProcess.on("close", (code) => {
+    //     console.log(`Sensor script exited with code ${code}`);
+    //     sensorProcess = null;
+    //   });
+
+    //   res.json({ success: true, message: "Sensor script started" });
+    // } else {
+    //   res.json({ success: false, message: "Sensor script already running" });
+    // }
   });
 
   // 🆕 API to STOP the Python script
-  app.get("/api/stop-script", (req, res) => {
-    if (sensorProcess) {
-      sensorProcess.kill("SIGTERM"); // Kill the process
-      sensorProcess = null;
-      res.json({ success: true, message: "Sensor script stopped" });
-    } else {
-      res.json({ success: false, message: "No sensor script running" });
+  app.get("/api/stop-script", async (req, res) => {
+    try {
+      const res = await axios.get("http://192.16.20.46:5000/stop-sensor");
+      console.log("res from pi:", res.data);
+    } catch (error) {
+      console.log("error", error.message);
     }
+    // if (sensorProcess) {
+    //   sensorProcess.kill("SIGTERM"); // Kill the process
+    //   sensorProcess = null;
+    //   res.json({ success: true, message: "Sensor script stopped" });
+    // } else {
+    //   res.json({ success: false, message: "No sensor script running" });
+    // }
   });
 
-  app.post("/run-script", (req, res) => {
+  app.post("/run-script", async (req, res) => {
     const { motors } = req.body;
 
     console.log({ motors });
 
-    if (!motors || !Array.isArray(motors)) {
-      return res.status(400).send("Invalid motors array");
-    }
+    // if (!motors || !Array.isArray(motors)) {
+    //   return res.status(400).send("Invalid motors array");
+    // }
 
-    execFile(
-      "python",
-      ["./motor_rotate.py", ...motors],
-      (err, stdout, stderr) => {
-        if (err) {
-          console.error("Script error:", stderr);
-          return res.status(500).send(stderr);
-        }
-        console.log("Script output:", stdout);
-        res.send(stdout);
-      }
-    );
+    // execFile(
+    //   "python",
+    //   ["./motor_rotate.py", ...motors],
+    //   (err, stdout, stderr) => {
+    //     if (err) {
+    //       console.error("Script error:", stderr);
+    //       return res.status(500).send(stderr);
+    //     }
+    //     console.log("Script output:", stdout);
+    //     res.send(stdout);
+    //   }
+    // );
+
+    try {
+      const res = await axios.post("http://192.16.20.46:5000/rotate-motor", {
+        motors
+      });
+      console.log("res from pi:", res.data);
+    } catch (error) {
+      console.log("error", error.message);
+    }
   });
 });
 
